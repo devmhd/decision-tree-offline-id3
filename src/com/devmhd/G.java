@@ -35,6 +35,32 @@ public class G {
 		
 	}
 	
+	
+	public static double getEntropy(ArrayList<AttributeValuePair> conditions){
+		
+		
+		int nYes = 0, nTotal = 0;
+		
+		for(int i = 0; i<N_RECORDS; ++i){
+			
+			if(complies(conditions, i)){
+				
+				nTotal++;
+				
+				if (allResults[i] == 1) nYes++;
+				
+			}
+		}
+		
+		double pPlus = (double) nYes / (double) nTotal;
+		double pMinus = 1.0 - pPlus;
+		
+		return pPlus * Math.log(pPlus) / Math.log(2.0) - pMinus * Math.log(pMinus) / Math.log(2.0);
+		
+		
+		
+	}
+	
 
 //	public static DecTreeNode id3(AttributeValuePair[] conditions, int targetAttribute, )
 	
