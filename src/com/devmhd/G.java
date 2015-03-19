@@ -5,6 +5,9 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+
+import org.omg.CORBA.NameValuePair;
 
 public class G {
 
@@ -16,21 +19,31 @@ public class G {
 	public static int N_RECORDS, N_ATTRIBS;
 
 
-	public static int[][] allAttribValues;
-	public static int[] targetValues;
+	public static int[][] allExamples;
+	public static int[] allResults;
 
+	
+	public static boolean complies(ArrayList<AttributeValuePair> conditions, int exampleNo){
+		
+		boolean complies = true;
+		for(AttributeValuePair condition : conditions){
+			if(allExamples[exampleNo][condition.attribute] != condition.value)
+				complies = false;
+		}
+		
+		return complies;
+		
+	}
+	
 
-
-
-
-
-
-
+//	public static DecTreeNode id3(AttributeValuePair[] conditions, int targetAttribute, )
+	
+	
 	public static void loadProblems(String filename){
 
 
-		allAttribValues = new int[N_RECORDS_MAX][N_ATTRIBS_MAX];
-		targetValues = new int[N_RECORDS_MAX];
+		allExamples = new int[N_RECORDS_MAX][N_ATTRIBS_MAX];
+		allResults = new int[N_RECORDS_MAX];
 
 		FileInputStream fstream;
 		BufferedReader br;
@@ -52,10 +65,10 @@ public class G {
 				N_ATTRIBS = attribVals.length-1;
 
 				for(int i=0; i< attribVals.length-1; ++i){
-					allAttribValues[N_RECORDS][i] = Integer.parseInt(attribVals[i]);
+					allExamples[N_RECORDS][i] = Integer.parseInt(attribVals[i]);
 				}
 
-				targetValues[N_RECORDS] = Integer.parseInt(attribVals[attribVals.length-1]);
+				allResults[N_RECORDS] = Integer.parseInt(attribVals[attribVals.length-1]);
 
 				N_RECORDS++;
 
@@ -85,11 +98,11 @@ public class G {
 
 			for(int j=0; j<N_ATTRIBS; ++j){
 
-				System.out.print(" " + allAttribValues[i][j]);
+				System.out.print(" " + allExamples[i][j]);
 
 			}
 
-			System.out.println("  " + targetValues[i]);
+			System.out.println("  " + allResults[i]);
 		}
 
 
