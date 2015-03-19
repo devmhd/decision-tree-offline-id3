@@ -22,49 +22,85 @@ public class G {
 	public static int[][] allExamples;
 	public static int[] allResults;
 
-	
+
 	public static boolean complies(ArrayList<AttributeValuePair> conditions, int exampleNo){
-		
+
 		boolean complies = true;
 		for(AttributeValuePair condition : conditions){
 			if(allExamples[exampleNo][condition.attribute] != condition.value)
 				complies = false;
 		}
-		
+
 		return complies;
-		
+
 	}
-	
-	
+
+
 	public static double getEntropy(ArrayList<AttributeValuePair> conditions){
-		
+
+
+		int nYes = 0, nTotal = 0;
+
+		for(int i = 0; i<N_RECORDS; ++i){
+
+			if(complies(conditions, i)){
+
+				nTotal++;
+
+				if (allResults[i] == 1) nYes++;
+
+			}
+		}
+
+		double pPlus = (double) nYes / (double) nTotal;
+		double pMinus = 1.0 - pPlus;
+
+		return pPlus * Math.log(pPlus) / Math.log(2.0) - pMinus * Math.log(pMinus) / Math.log(2.0);
+
+
+
+	}
+
+	public static double getEntropyCoEfficients(ArrayList<AttributeValuePair> conditions, int attribute, int value){
 		
 		int nYes = 0, nTotal = 0;
 		
 		for(int i = 0; i<N_RECORDS; ++i){
-			
+
 			if(complies(conditions, i)){
-				
+
 				nTotal++;
-				
-				if (allResults[i] == 1) nYes++;
-				
+
+				if (allExamples[i][attribute] == value) nYes++;
+
 			}
 		}
 		
-		double pPlus = (double) nYes / (double) nTotal;
-		double pMinus = 1.0 - pPlus;
-		
-		return pPlus * Math.log(pPlus) / Math.log(2.0) - pMinus * Math.log(pMinus) / Math.log(2.0);
-		
-		
-		
+		return (double)nYes / (double)nTotal;
 	}
-	
 
-//	public static DecTreeNode id3(AttributeValuePair[] conditions, int targetAttribute, )
-	
-	
+	public static double getInfoGain(ArrayList<AttributeValuePair> conditions, int attribute){
+		
+		
+		double infoGain = getEntropy(conditions);
+		
+		for(int i=0; i<10; ++i){
+			
+			ArrayList<AttributeValuePair> newConditions = new ArrayList<AttributeValuePair>(conditions);
+			newConditions.add(new AttributeValuePair(attribute, i));
+			
+			infoGain -= getEntropyCoEfficients(conditions, attribute, i) * getEntropy(newConditions);
+		}
+		
+		
+		return infoGain;
+
+	}
+
+
+	//	public static DecTreeNode id3(AttributeValuePair[] conditions, int targetAttribute, )
+
+
 	public static void loadProblems(String filename){
 
 
