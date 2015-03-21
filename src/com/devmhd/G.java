@@ -26,6 +26,15 @@ public class G {
 	public static int[][] allExamples;
 	public static int[] allResults;
 
+	
+	public static boolean singleComplies(AttributeValuePair condition, int exampleNo){
+
+		
+		return allExamples[exampleNo][condition.attribute] == condition.value;
+		
+
+	}
+	
 
 	public static boolean complies(ArrayList<AttributeValuePair> conditions, int exampleNo){
 
@@ -40,20 +49,20 @@ public class G {
 	}
 
 
-	public static double getEntropy(ArrayList<AttributeValuePair> conditions){
+	public static double getEntropy(ArrayList<Integer> exampleSet){
 
 
 		int nYes = 0, nTotal = 0;
 
-		for(int i = 0; i<N_RECORDS; ++i){
+		for(Integer i : exampleSet){
 
-			if(complies(conditions, i)){
+
 
 				nTotal++;
 
 				if (allResults[i] == 1) nYes++;
 
-			}
+			
 		}
 		
 		if(nYes == 0 || nTotal == nYes) return 1.0;
@@ -71,23 +80,34 @@ public class G {
 		
 		return entropy;
 
-
-
+	}
+	
+	public static ArrayList<Integer> filterExampleList(ArrayList<Integer> parentSet, AttributeValuePair condition){
+		
+		
+		ArrayList<Integer> filtered = new ArrayList<Integer>();
+		
+		for(Integer i : parentSet){
+			if(singleComplies(condition, i)) filtered.add(i);
+		}
+		
+		return filtered;
+		
 	}
 
-	public static double getEntropyCoEfficients(ArrayList<AttributeValuePair> conditions, int attribute, int value){
+	public static double getEntropyCoEfficients(ArrayList<Integer> exampleSet, int attribute, int value){
 		
 		int nYes = 0, nTotal = 0;
 		
-		for(int i = 0; i<N_RECORDS; ++i){
+		for(Integer i : exampleSet){
 
-			if(complies(conditions, i)){
+		
 
 				nTotal++;
 
 				if (allExamples[i][attribute] == value) nYes++;
 
-			}
+			
 		}
 		
 //		System.out.println("Coeff " + ((double)nYes / (double)nTotal));
@@ -97,19 +117,17 @@ public class G {
 		
 	}
 
-	public static double getInfoGain(ArrayList<AttributeValuePair> conditions, int attribute){
+	public static double getInfoGain(ArrayList<Integer> exampleSet, int attribute){
 		
 		
-		double infoGain = getEntropy(conditions);
+		double infoGain = getEntropy(exampleSet);
 		
 //		System.out.println("Info Gain before: " + infoGain);
 		
 		for(int i=0; i<10; ++i){
 			
-			ArrayList<AttributeValuePair> newConditions = new ArrayList<AttributeValuePair>(conditions);
-			newConditions.add(new AttributeValuePair(attribute, i));
 			
-			infoGain -= getEntropyCoEfficients(conditions, attribute, i) * getEntropy(newConditions);
+			infoGain -= getEntropyCoEfficients(exampleSet, attribute, i) * getEntropy(filterExampleList(exampleSet,new AttributeValuePair(attribute, i)));
 		}
 		
 //		System.out.println("Info Gain after: " + infoGain);
@@ -119,16 +137,16 @@ public class G {
 	}
 	
 	
-	public static int getBestAttribute(ArrayList<AttributeValuePair> conditions, ArrayList<Integer> attributeSet){
+	public static int getBestAttribute(ArrayList<Integer> exampleSet, ArrayList<Integer> attributeSet){
 		
 		double maxInfoGain = -100000.0;
 		int theAttribute = 50;
-		System.out.print("From attributes");
-		Debug.printAttributeList(attributeSet);
+//		System.out.print("From attributes");
+	//	Debug.printAttributeList(attributeSet);
 		for(Integer attribute : attributeSet){
 			
-			double gain = getInfoGain(conditions, attribute);
-			System.out.print("Gains: " + gain);
+			double gain = getInfoGain(exampleSet, attribute);
+	//		System.out.print("Gains: " + gain);
 			if(gain > maxInfoGain){
 				maxInfoGain = gain;
 				theAttribute = attribute;
@@ -159,30 +177,27 @@ public class G {
 	
 
 
-	public static Node id3(ArrayList<AttributeValuePair> conditions, ArrayList<Integer> attributeSet, int depth){
+	public static Node id3(ArrayList<Integer> trainingExampleSet, ArrayList<Integer> attributeSet, int depth){
 		
-		System.out.println("ID3 called, depth: " + depth);
+//		System.out.println("ID3 called, depth: " + depth);
 //		Debug.printAttributeList(attributeSet);
 		
 		Node root = new Node();
 		
 		int nYes = 0, nNo = 0;
 		
-		for(int i = 0; i<N_RECORDS; ++i){
-
-			if(complies(conditions, i)){
+		for(Integer i: trainingExampleSet){
 
 				if(allResults[i] == 1) nYes++;
 				else nNo++;
 
-			}
 		}
 		
 		if(nNo == 0){ 		// All Positive
 			root.setType(Node.TYPE_LEAF);
 			root.setResult(1);
 			
-			System.out.println("Returned: allpos");
+		//	System.out.println("Returned: allpos");
 			
 			return root;
 		}
@@ -191,7 +206,7 @@ public class G {
 			root.setType(Node.TYPE_LEAF);
 			root.setResult(0);
 			
-			System.out.println("Returned allneg");
+		//	System.out.println("Returned allneg");
 			return root;
 		}
 		
@@ -202,7 +217,7 @@ public class G {
 			else root.setResult(0);
 			
 			
-			System.out.println("Returned attr set empty");
+	//		System.out.println("Returned attr set empty");
 			
 			return root;
 		}
@@ -210,11 +225,11 @@ public class G {
 		
 		
 		
-		System.out.println("Yes No " + nYes + " " + nNo);
+		//System.out.println("Yes No " + nYes + " " + nNo);
 		// Otherwise (recursion)
 		
-		int A = getBestAttribute(conditions, attributeSet);
-		System.out.println("Best attribute: " + A);
+		int A = getBestAttribute(trainingExampleSet, attributeSet);
+		//System.out.println("Best attribute: " + A);
 		
 		
 		root.setType(Node.TYPE_BODY);
@@ -223,10 +238,12 @@ public class G {
 		
 		for(int i = 0; i<10; ++i){   // For all values of A
 			
-			ArrayList<AttributeValuePair> newConditions = new ArrayList<AttributeValuePair>(conditions);
-			newConditions.add(new AttributeValuePair(A, i));
+		//	ArrayList<AttributeValuePair> newConditions = new ArrayList<AttributeValuePair>(conditions);
+		//	newConditions.add(new AttributeValuePair(A, i));
 			
-			if(isExampleSetEmpty(newConditions)){
+			ArrayList<Integer> newSet = filterExampleList(trainingExampleSet, new AttributeValuePair(A, i));
+			
+			if(newSet.isEmpty()){
 				
 				Node childNode = new Node();
 				
@@ -243,9 +260,7 @@ public class G {
 				ArrayList<Integer> newAttributeSet =  new ArrayList<Integer>(attributeSet);
 				newAttributeSet.remove(new Integer(A));
 				
-				
-				
-				root.children[i] = id3(newConditions, newAttributeSet, depth + 1);
+				root.children[i] = id3(newSet, newAttributeSet, depth + 1);
 				
 			}
 			
