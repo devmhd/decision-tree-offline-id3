@@ -16,7 +16,7 @@ public class Main {
 		for(int i = 0; i<10; ++i) ints.add(new Integer(i));
 			
 		
-		Node root = G.id3(new ArrayList<AttributeValuePair>(), ints);
+		Node root = G.id3(new ArrayList<AttributeValuePair>(), ints, 0);
 		
 		System.out.println("Done");
 		

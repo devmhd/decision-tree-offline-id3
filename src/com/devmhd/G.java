@@ -1,6 +1,9 @@
 package com.devmhd;
 
 import java.io.BufferedReader;
+
+
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -8,6 +11,9 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 public class G {
+	
+	
+	int depth = 0;
 
 
 	public static final int N_RECORDS_MAX = 1000;
@@ -49,11 +55,21 @@ public class G {
 
 			}
 		}
+		
+		if(nYes == 0 || nTotal == nYes) return 1.0;
 
 		double pPlus = (double) nYes / (double) nTotal;
 		double pMinus = 1.0 - pPlus;
+		
+		
+//		System.out.println("YES: " + nYes + ", NO: " + (nTotal - nYes));
+//		System.out.println("PPLUS: " + pPlus + ", PMIN: " + pMinus);
+		
+		double entropy = - pPlus * Math.log(pPlus) / Math.log(2.0) - pMinus * Math.log(pMinus) / Math.log(2.0);
 
-		return pPlus * Math.log(pPlus) / Math.log(2.0) - pMinus * Math.log(pMinus) / Math.log(2.0);
+//		System.out.println("Entropy " + entropy);
+		
+		return entropy;
 
 
 
@@ -74,6 +90,7 @@ public class G {
 			}
 		}
 		
+//		System.out.println("Coeff " + ((double)nYes / (double)nTotal));
 		return (double)nYes / (double)nTotal;
 		
 		
@@ -85,6 +102,8 @@ public class G {
 		
 		double infoGain = getEntropy(conditions);
 		
+//		System.out.println("Info Gain before: " + infoGain);
+		
 		for(int i=0; i<10; ++i){
 			
 			ArrayList<AttributeValuePair> newConditions = new ArrayList<AttributeValuePair>(conditions);
@@ -93,6 +112,7 @@ public class G {
 			infoGain -= getEntropyCoEfficients(conditions, attribute, i) * getEntropy(newConditions);
 		}
 		
+//		System.out.println("Info Gain after: " + infoGain);
 		
 		return infoGain;
 
@@ -101,12 +121,14 @@ public class G {
 	
 	public static int getBestAttribute(ArrayList<AttributeValuePair> conditions, ArrayList<Integer> attributeSet){
 		
-		double maxInfoGain = 0.0;
-		int theAttribute = 0;
-		
+		double maxInfoGain = -100000.0;
+		int theAttribute = 50;
+		System.out.print("From attributes");
+		Debug.printAttributeList(attributeSet);
 		for(Integer attribute : attributeSet){
 			
 			double gain = getInfoGain(conditions, attribute);
+			System.out.print("Gains: " + gain);
 			if(gain > maxInfoGain){
 				maxInfoGain = gain;
 				theAttribute = attribute;
@@ -137,9 +159,10 @@ public class G {
 	
 
 
-	public static Node id3(ArrayList<AttributeValuePair> conditions, ArrayList<Integer> attributeSet){
+	public static Node id3(ArrayList<AttributeValuePair> conditions, ArrayList<Integer> attributeSet, int depth){
 		
-		Debug.printAttributeList(attributeSet);
+		System.out.println("ID3 called, depth: " + depth);
+//		Debug.printAttributeList(attributeSet);
 		
 		Node root = new Node();
 		
@@ -158,14 +181,18 @@ public class G {
 		if(nNo == 0){ 		// All Positive
 			root.setType(Node.TYPE_LEAF);
 			root.setResult(1);
+			
+			System.out.println("Returned: allpos");
+			
 			return root;
 		}
 		
 		if(nYes == 0){		// All Negative
 			root.setType(Node.TYPE_LEAF);
 			root.setResult(0);
-			return root;
 			
+			System.out.println("Returned allneg");
+			return root;
 		}
 		
 		if(attributeSet.isEmpty()){
@@ -174,16 +201,21 @@ public class G {
 			if(nYes > nNo) root.setResult(1);
 			else root.setResult(0);
 			
+			
+			System.out.println("Returned attr set empty");
+			
 			return root;
 		}
 		
 		
 		
 		
-		
+		System.out.println("Yes No " + nYes + " " + nNo);
 		// Otherwise (recursion)
 		
 		int A = getBestAttribute(conditions, attributeSet);
+		System.out.println("Best attribute: " + A);
+		
 		
 		root.setType(Node.TYPE_BODY);
 		
@@ -209,9 +241,11 @@ public class G {
 			} else {
 				
 				ArrayList<Integer> newAttributeSet =  new ArrayList<Integer>(attributeSet);
-				newAttributeSet.remove(new Integer(i));
+				newAttributeSet.remove(new Integer(A));
 				
-				root.children[i] = id3(newConditions, newAttributeSet);
+				
+				
+				root.children[i] = id3(newConditions, newAttributeSet, depth + 1);
 				
 			}
 			
@@ -238,11 +272,9 @@ public class G {
 		FileInputStream fstream;
 		BufferedReader br;
 		try {
-
-
+			
 			fstream = new FileInputStream(filename);
 			br = new BufferedReader(new InputStreamReader(fstream));
-
 
 			String line;
 
